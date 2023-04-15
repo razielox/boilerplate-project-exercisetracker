@@ -61,15 +61,21 @@ app.get('/api/users', async(request, response) => {
 
 app.get('/api/users/:id/logs', async(request, response) => {
   const userId = request.params.id
-  console.log(userId)
+  const {from, to } = request.query
+  console.log(from, to)
+  console.log(new Date(from).toDateString({}, {timeZone: 'UTC'}))
   try {
-    const getLogs = await userModel.find({_id:userId}).select({log:1,_id:0}).exec()
-    response.json(getLogs)
-    console.log(getLogs)
+    const getLogs = await userModel.find({_id:userId}).select({log:1,_id:1, username:1})
+    const {_id, username, log} = getLogs[0]
+    
+    const resultLog = {_id, username, count:log.length, log}
+    response.json(resultLog)
+    console.log(resultLog)
   } catch (error) {
     console.log(error)
   }
 })
+
 app.post('/api/users/:id/exercises', async(request, response) => {
   const userId = request.params.id
   const exerciseFromRequest = {
@@ -90,6 +96,8 @@ app.post('/api/users/:id/exercises', async(request, response) => {
     console.log(error)
   }
 })
+
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
