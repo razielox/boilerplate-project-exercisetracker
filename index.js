@@ -80,7 +80,7 @@ app.post('/api/users/:id/exercises', async(request, response) => {
   const userId = request.params.id
   const exerciseFromRequest = {
     description: request.body.description,
-    duration: request.body.duration,
+    duration: Number(request.body.duration),
     date: request.body.date ||  new Date().toDateString({},{timeZone: "UTC"})
   }
   try {
