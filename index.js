@@ -61,32 +61,57 @@ app.get('/api/users', async(request, response) => {
 
 app.get('/api/users/:id/logs', async(request, response) => {
   const userId = request.params.id
-  const {from, to } = request.query
-  console.log(from, to)
-  console.log(new Date(from).toDateString({}, {timeZone: 'UTC'}))
+  const {from, to, limit } = request.query
+  console.log(from, to, userId)
+  
   try {
-    const getLogs = await userModel.find({_id:userId}).select({log:1,_id:1, username:1})
+    if (from !== undefined && to !== undefined) {
+      const query = [
+        {$match:{_id: new mongo.Types.ObjectId(userId)}},
+          {$project:{
+            log:{
+              $filter:{
+                input:'$log',
+                as:'item',
+                cond: {$and:[{$gte:['$$item.date', new Date(from)]},{$lte:['$$item.date', new Date(to)]}]}
+              }
+            }
+          }
+        }]
+        limit !== undefined ? query.push({$limit: Number(limit)}) : null
+      console.log(query)
+      const getLogsByDate = await userModel.aggregate(query)
+      console.log(getLogsByDate)
+      return response.json(getLogsByDate)
+    } else {
+      console.log('sin fecha')
+    }
+    const getLogs = await userModel.find({_id:userId},{log:1,_id:1,username:1})
     const {_id, username, log} = getLogs[0]
     
+    log.map(index => {
+      console.log(index.date, new Date(index.date).getTime())
+    })
     const resultLog = {_id, username, count:log.length, log}
-    response.json(resultLog)
-    console.log(resultLog)
+    response.json(getLogs)
+    //console.log(resultLog)
   } catch (error) {
     console.log(error)
   }
 })
 
 app.post('/api/users/:id/exercises', async(request, response) => {
-  const userId = request.params.id
+    const {description, duration, date} = request.body
+    const userId = request.params.id
   const exerciseFromRequest = {
-    description: request.body.description,
-    duration: Number(request.body.duration),
-    date: request.body.date ||  new Date().toDateString({},{timeZone: "UTC"})
+    description,
+    duration,
+    date: date === undefined ? new Date() : new Date(date)
   }
+  console.log(exerciseFromRequest)
   try {
     const user = await userModel.find({_id: userId}).exec()
     if(!!user.length) {
-      console.log(exerciseFromRequest)
       const updateUser = await userModel.findOneAndUpdate({_id: userId},{$push:{log:exerciseFromRequest}},{new:true}).exec()
       response.json(updateUser)
     } else {
