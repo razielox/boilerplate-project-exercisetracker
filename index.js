@@ -52,38 +52,38 @@ app.get('/api/users/:id/logs', async(request, response) => {
   console.log(from, to, userId)
   
   try {
-    if (from !== undefined && to !== undefined) {
+    if (from !== undefined || to !== undefined) {
       let query = [
-        {$match:{_id: new mongo.Types.ObjectId(userId)}} ,
-          {$addFields:{
+        {$match:{_id: new mongo.Types.ObjectId(userId)}},
+          {$project:{
             log:{
               $filter:{
                 limit: Number(limit) || null,
                 input:'$log',
                 as:'item',
-                cond: {$and:[{$gte:['$$item.date', new Date(from)]},{$lte:['$$item.date', new Date(to)]}]}
+                cond: {$and:[
+                  {$gte:['$$item.date', new Date(from)]},
+                  {$lte:['$$item.date', new Date(to)]}
+                ]}
                 
               }
             }
           }
         }]
         //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
-        //console.log(query)
+        //console.log(query,limit)
       const getLogsByDate = await userModel.aggregate(query)
       const finalResponse = {
         _id: getLogsByDate[0]._id,
        username: getLogsByDate[0].username,
-       from: new Date(from).toDateString(),
-       to: new Date(from).toDateString(),
        count: getLogsByDate[0].log.length,
        log: getLogsByDate[0].log.map(log => ({
          description: log.description,
-         duration: Number(log.duration),
+         duration: log.duration,
          date: new Date(log.date).toDateString()
        }))
         
      }
-      console.log(finalResponse)
       return response.json(finalResponse)
     } else {
 
@@ -98,7 +98,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         count: getLogs[0].log.length,
         log: getLogs[0].log.map(log => ({
           description: log.description,
-          duration: Number(log.duration),
+          duration: log.duration,
           date: new Date(log.date).toDateString()
         }))
          
@@ -116,7 +116,7 @@ app.post('/api/users/:id/exercises', async(request, response) => {
     const userId = request.params.id
   const exerciseFromRequest = {
     description,
-    duration: Number(duration),
+    duration,
     date: date === undefined ? new Date() : new Date(date)
   }
   console.log(exerciseFromRequest)
@@ -127,11 +127,14 @@ app.post('/api/users/:id/exercises', async(request, response) => {
       const finalResponse = {
         _id: updateUser._id,
         username: updateUser.username,
-        date: new Date(updateUser.log[updateUser.log.length -1].date).toDateString(),
-        duration: Number(updateUser.log[updateUser.log.length -1].duration),
-        description: updateUser.log[updateUser.log.length -1].description
+        log: updateUser.log.map(log => ({
+          description: log.description,
+          duration: log.duration,
+          date: new Date(log.date).toDateString()
+        }))
+
       }
-      console.log(finalResponse)
+      console.log(finalResponse, updateUser)
       response.json(finalResponse)
     } else {
       response.send('nada')
