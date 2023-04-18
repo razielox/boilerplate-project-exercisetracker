@@ -103,7 +103,7 @@ app.post('/api/users/:id/exercises', async(request, response) => {
     const userId = request.params.id
   const exerciseFromRequest = {
     description,
-    duration,
+    duration: Number(duration),
     date: date === undefined ? new Date() : new Date(date)
   }
   console.log(exerciseFromRequest)
@@ -115,7 +115,7 @@ app.post('/api/users/:id/exercises', async(request, response) => {
         _id: updateUser._id,
         username: updateUser.username,
         date: new Date(updateUser.log[updateUser.log.length -1].date).toDateString(),
-        duration: updateUser.log[updateUser.log.length -1].duration,
+        duration: Number(updateUser.log[updateUser.log.length -1].duration),
         description: updateUser.log[updateUser.log.length -1].description
       }
       console.log(finalResponse)
