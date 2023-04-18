@@ -114,14 +114,11 @@ app.post('/api/users/:id/exercises', async(request, response) => {
       const finalResponse = {
         _id: updateUser._id,
         username: updateUser.username,
-        log: updateUser.log.map(log => ({
-          description: log.description,
-          duration: log.duration,
-          date: new Date(log.date).toDateString()
-        }))
-
+        date: new Date(updateUser.log[updateUser.log.length -1].date).toDateString(),
+        duration: updateUser.log[updateUser.log.length -1].duration,
+        description: updateUser.log[updateUser.log.length -1].description
       }
-      console.log(finalResponse, updateUser)
+      console.log(finalResponse)
       response.json(finalResponse)
     } else {
       response.send('nada')
