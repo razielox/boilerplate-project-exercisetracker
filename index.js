@@ -54,8 +54,8 @@ app.get('/api/users/:id/logs', async(request, response) => {
   try {
     if (from !== undefined && to !== undefined) {
       let query = [
-        {$match:{_id: new mongo.Types.ObjectId(userId)}},
-          {$project:{
+        {$match:{_id: new mongo.Types.ObjectId(userId)}} ,
+          {$addFields:{
             log:{
               $filter:{
                 limit: Number(limit) || null,
@@ -68,10 +68,23 @@ app.get('/api/users/:id/logs', async(request, response) => {
           }
         }]
         //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
-        console.log(query,limit)
+        //console.log(query)
       const getLogsByDate = await userModel.aggregate(query)
-      console.log(getLogsByDate)
-      return response.json(getLogsByDate)
+      const finalResponse = {
+        _id: getLogsByDate[0]._id,
+       username: getLogsByDate[0].username,
+       from: new Date(from).toDateString(),
+       to: new Date(from).toDateString(),
+       count: getLogsByDate[0].log.length,
+       log: getLogsByDate[0].log.map(log => ({
+         description: log.description,
+         duration: Number(log.duration),
+         date: new Date(log.date).toDateString()
+       }))
+        
+     }
+      console.log(finalResponse)
+      return response.json(finalResponse)
     } else {
 
       const getLogs = await userModel.find({_id:userId},{log:1,_id:1,username:1})
@@ -85,7 +98,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         count: getLogs[0].log.length,
         log: getLogs[0].log.map(log => ({
           description: log.description,
-          duration: log.duration,
+          duration: Number(log.duration),
           date: new Date(log.date).toDateString()
         }))
          
