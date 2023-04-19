@@ -56,6 +56,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
       let query = [
         {$match:{_id: new mongo.Types.ObjectId(userId)}},
           {$project:{
+            username:1,
             log:{
               $filter:{
                 limit: Number(limit) || null,
