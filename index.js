@@ -81,7 +81,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
        count: getLogsByDate[0].log.length,
        log: getLogsByDate[0].log.map(log => ({
          description: log.description,
-         duration: log.duration,
+         duration: Number(log.duration),
          date: new Date(log.date).toDateString()
        }))
         
@@ -100,7 +100,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         count: getLogs[0].log.length,
         log: getLogs[0].log.map(log => ({
           description: log.description,
-          duration: log.duration,
+          duration: Number(log.duration),
           date: new Date(log.date).toDateString()
         }))
          
