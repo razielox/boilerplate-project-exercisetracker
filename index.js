@@ -76,6 +76,8 @@ app.get('/api/users/:id/logs', async(request, response) => {
       const finalResponseByDate = {
         _id: getLogsByDate[0]._id,
        username: getLogsByDate[0].username,
+       from: new Date(from).toDateString(),
+       to: new Date(to).toDateString(),
        count: getLogsByDate[0].log.length,
        log: getLogsByDate[0].log.map(log => ({
          description: log.description,
