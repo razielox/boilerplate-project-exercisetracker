@@ -73,7 +73,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
         //console.log(query,limit)
       const getLogsByDate = await userModel.aggregate(query)
-      const finalResponse = {
+      const finalResponseByDate = {
         _id: getLogsByDate[0]._id,
        username: getLogsByDate[0].username,
        count: getLogsByDate[0].log.length,
@@ -84,7 +84,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
        }))
         
      }
-      return response.json(finalResponse)
+      return response.json(finalResponseByDate)
     } else {
 
       const getLogs = await userModel.find({_id:userId},{log:1,_id:1,username:1})
@@ -116,7 +116,7 @@ app.post('/api/users/:id/exercises', async(request, response) => {
     const userId = request.params.id
   const exerciseFromRequest = {
     description,
-    duration,
+    duration: Number(duration),
     date: date === undefined ? new Date() : new Date(date)
   }
   console.log(exerciseFromRequest)
@@ -127,12 +127,9 @@ app.post('/api/users/:id/exercises', async(request, response) => {
       const finalResponse = {
         _id: updateUser._id,
         username: updateUser.username,
-        log: updateUser.log.map(log => ({
-          description: log.description,
-          duration: log.duration,
-          date: new Date(log.date).toDateString()
-        }))
-
+        date: new Date(updateUser.log[updateUser.log.length -1].date).toDateString(),
+        duration: Number(updateUser.log[updateUser.log.length -1].duration),
+        description: updateUser.log[updateUser.log.length -1].description
       }
       console.log(finalResponse, updateUser)
       response.json(finalResponse)
