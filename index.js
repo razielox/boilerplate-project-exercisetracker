@@ -52,8 +52,51 @@ app.get('/api/users/:id/logs', async(request, response) => {
   console.log(from, to, userId)
   
   try {
-    if (from !== undefined || to !== undefined) {
-      let query = [
+    const getLogs = await userModel.find({_id:userId},{log:1,_id:1,username:1})
+    const userLogResponse = {
+      _id: getLogs[0]._id,
+      username: getLogs[0].username
+    }
+    if (from !== undefined || to !== undefined || limit !== undefined) {
+    
+    if (from && to) {
+
+      const getLogArr = getLogs[0].log
+      .filter(indexLog => new Date(indexLog.date).getTime() >= new Date(from).getTime() && new Date(indexLog.date).getTime() <= new Date(to).getTime())
+      .map(index =>({
+        description: index.description,
+        duration: Number(index.duration),
+        date: new Date(index.date).toDateString()
+      }))
+       
+      userLogResponse.from = new Date(from).toDateString()
+      userLogResponse.to = new Date(to).toDateString()
+      userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
+      userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
+    }  else if(to) {
+      const getLogArr = getLogs[0].log
+      .filter(indexLog => new Date(indexLog.date).getTime() <= new Date(to).getTime())
+      .map(index => ({
+        description: index.description,
+        duration: Number(index.duration),
+        date: new Date(index.date).toDateString()
+      }))
+      userLogResponse.to = new Date(to).toDateString()
+      userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
+      userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
+    } else if (from) {
+      const getLogArr = getLogs[0].log
+      .filter(indexLog => new Date(indexLog.date).getTime() >= new Date(from).getTime())
+      .map(index => ({
+        description: index.description,
+        duration: Number(index.duration),
+        date: new Date(index.date).toDateString()
+      }))
+      userLogResponse.from = new Date(from).toDateString()
+      userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
+      userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
+    } 
+     /*  let query = [
         {$match:{_id: new mongo.Types.ObjectId(userId)}},
           {$project:{
             username:1,
@@ -70,27 +113,13 @@ app.get('/api/users/:id/logs', async(request, response) => {
               }
             }
           }
-        }]
-        //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
-        //console.log(query,limit)
-      const getLogsByDate = await userModel.aggregate(query)
-      const finalResponseByDate = {
-        _id: getLogsByDate[0]._id,
-       username: getLogsByDate[0].username,
-       from: new Date(from).toDateString(),
-       to: new Date(to).toDateString(),
-       count: getLogsByDate[0].log.length,
-       log: getLogsByDate[0].log.map(log => ({
-         description: log.description,
-         duration: Number(log.duration),
-         date: new Date(log.date).toDateString()
-       }))
-        
-     }
-      return response.json(finalResponseByDate)
+          //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
+          //console.log(query,limit)
+          const getLogsByDate = await userModel.aggregate(query)
+        }] */
+      return response.json(userLogResponse)
     } else {
 
-      const getLogs = await userModel.find({_id:userId},{log:1,_id:1,username:1})
       //const {_id, username, log} = getLogs[0]
       
       //log.map(index => { console.log(index.date, new Date(index.date).getTime())})
