@@ -95,6 +95,14 @@ app.get('/api/users/:id/logs', async(request, response) => {
       //userLogResponse.from = new Date(from).toDateString()
       userLogResponse.count =limit  ? getLogArr.slice(0,limit).length :  getLogArr.length
       userLogResponse.log = limit  ? getLogArr.slice(0,limit): getLogArr
+    } else if(limit) {
+      const getLogArr = getLogs[0].log.slice(0,limit).map(index => ({
+        description: index.description,
+        duration: Number(index.duration),
+        date: new Date(index.date).toDateString()
+      }))
+      userLogResponse.count = getLogArr.length
+      userLogResponse.log =  getLogArr
     } 
       return response.json(userLogResponse)
     } else {
