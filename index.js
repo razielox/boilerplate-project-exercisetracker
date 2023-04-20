@@ -69,8 +69,8 @@ app.get('/api/users/:id/logs', async(request, response) => {
         date: new Date(index.date).toDateString()
       }))
        
-      userLogResponse.from = new Date(from).toDateString()
-      userLogResponse.to = new Date(to).toDateString()
+      //userLogResponse.from = new Date(from).toDateString()
+      //userLogResponse.to = new Date(to).toDateString()
       userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
       userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
     }  else if(to) {
@@ -81,7 +81,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         duration: Number(index.duration),
         date: new Date(index.date).toDateString()
       }))
-      userLogResponse.to = new Date(to).toDateString()
+      //userLogResponse.to = new Date(to).toDateString()
       userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
       userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
     } else if (from) {
@@ -92,7 +92,7 @@ app.get('/api/users/:id/logs', async(request, response) => {
         duration: Number(index.duration),
         date: new Date(index.date).toDateString()
       }))
-      userLogResponse.from = new Date(from).toDateString()
+      //userLogResponse.from = new Date(from).toDateString()
       userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
       userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
     } 
