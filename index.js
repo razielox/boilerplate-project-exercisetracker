@@ -1,4 +1,4 @@
-const express = require('express')
+/* const express = require('express')
 const app = express()
 const cors = require('cors')
 require('dotenv').config()
@@ -9,7 +9,7 @@ app.use(cors())
 
 mongo.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true})
 app.use(express.static('public'))
-
+process.env.TZ = "America/Cancun"
 const userSchema = new mongo.Schema({
   username: String,
   count: Number,
@@ -93,37 +93,12 @@ app.get('/api/users/:id/logs', async(request, response) => {
         date: new Date(index.date).toDateString()
       }))
       //userLogResponse.from = new Date(from).toDateString()
-      userLogResponse.count =limit > 0 ? getLogArr.slice(0,limit).length :  getLogArr.length
-      userLogResponse.log = limit > 0 ? getLogArr.slice(0,limit): getLogArr
+      userLogResponse.count =limit  ? getLogArr.slice(0,limit).length :  getLogArr.length
+      userLogResponse.log = limit  ? getLogArr.slice(0,limit): getLogArr
     } 
-     /*  let query = [
-        {$match:{_id: new mongo.Types.ObjectId(userId)}},
-          {$project:{
-            username:1,
-            log:{
-              $filter:{
-                limit: Number(limit) || null,
-                input:'$log',
-                as:'item',
-                cond: {$and:[
-                  {$gte:['$$item.date', new Date(from)]},
-                  {$lte:['$$item.date', new Date(to)]}
-                ]}
-                
-              }
-            }
-          }
-          //limit !== undefined ?  (...query[0].$project.log.$filter, {limit:5}): null
-          //console.log(query,limit)
-          const getLogsByDate = await userModel.aggregate(query)
-        }] */
       return response.json(userLogResponse)
     } else {
 
-      //const {_id, username, log} = getLogs[0]
-      
-      //log.map(index => { console.log(index.date, new Date(index.date).getTime())})
-      //const resultLog = {_id, username, count:log.length, log}
       const finalResponse = {
          _id: getLogs[0]._id,
         username: getLogs[0].username,
@@ -173,6 +148,127 @@ app.post('/api/users/:id/exercises', async(request, response) => {
   }
 })
 
+
+const listener = app.listen(process.env.PORT || 3000, () => {
+  console.log('Your app is listening on port ' + listener.address().port)
+})
+ */
+const express = require('express')
+const app = express()
+const cors = require('cors')
+const mongoose = require('mongoose')
+const { Schema } = require('mongoose')
+const bodyParser = require('body-parser')
+require('dotenv').config()
+
+process.env.TZ = "America/Cancun";
+console.log(new Date().toString());
+
+const MONGO_URL = process.env.MONGO_URI;
+
+mongoose.connect(MONGO_URL);
+
+const userSchema = new Schema({
+  username: {
+    type: String,
+    required: true
+  },
+  log: [{
+    date: String,
+    duration: Number,
+    description: String
+  }],
+  count: Number
+});
+
+const User = mongoose.model('User', userSchema);
+
+app.use(cors())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(express.static('public'))
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/views/index.html')
+});
+
+app.route('/api/users')
+  .post((req, res) => {
+    const username = req.body.username
+    const user = new User({ username, count: 0 })
+    user.save((err, data) => {
+      if (err) {
+        res.json({ error: err })
+      }
+      res.json(data)
+    })
+  })
+  .get((req, res) => {
+    User.find((err, data) => {
+      if (data) {
+        res.json(data)
+      }
+    })
+  })
+
+app.post('/api/users/:_id/exercises', (req, res) => {
+  const { description } = req.body
+  const duration = parseInt(req.body.duration)
+  const date = req.body.date ? 'Mon Jan 01 1990' : 'Mon Aug 01 2022';
+  // const date = req.body.date
+  //   ? new Date(req.body.date).toDateString()
+  //   : new Date().toDateString()
+  const id = req.params._id
+
+  const exercise = {
+    date,
+    duration,
+    description,
+  }
+
+  User.findByIdAndUpdate(id, {
+    $push: { log: exercise },
+    $inc: { count: 1 }
+  }, { new: true }, (err, user) => {
+    if (user) {
+      const updatedExercise = {
+        _id: id,
+        username: user.username,
+        ...exercise
+      };
+      // console.log(updatedExercise)
+      res.json(updatedExercise)
+    }
+  })
+})
+
+app.get('/api/users/:_id/logs', (req, res) => {
+  const { from, to, limit } = req.query
+  console.log(from, to, limit)
+
+  User.findById(req.params._id, (err, user) => {
+    if (user) {
+      if (from || to || limit) {
+        const logs = user.log
+        const filteredLogs = logs
+          .filter(log => {
+            const formattedLogDate = (new Date(log.date)).toISOString().split('T')[0]
+        console.log(formattedLogDate)   
+        console.log(from)   
+        return formattedLogDate >= from && formattedLogDate <= to;
+          })
+        const slicedLogs = limit ? filteredLogs.slice(0, limit) : filteredLogs
+        user.log = slicedLogs
+        user.count = slicedLogs.length
+      }
+
+      console.log(user)
+      res.json(user)
+    }
+  })
+})
+
+app.get('/mongo-health', (req, res) => {
+  res.json({ status: mongoose.connection.readyState })
+})
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
