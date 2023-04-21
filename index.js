@@ -139,10 +139,11 @@ app.post('/api/users/:id/exercises', async(request, response) => {
     const user = await userModel.find({_id: userId}).exec()
     if(!!user.length) {
       const updateUser = await userModel.findOneAndUpdate({_id: userId},{$push:{log:exerciseFromRequest}},{new:true}).exec()
+      const realDate = (updateUser.log[updateUser.log.length -1].date.toISOString().split('T'))[0].split('-')
       const finalResponse = {
         _id: updateUser._id,
         username: updateUser.username,
-        date: new Date(updateUser.log[updateUser.log.length -1].date).toUTCString(),
+        date: new Date(realDate[0], realDate[1]-1,realDate[2]).toDateString(),
         duration: Number(updateUser.log[updateUser.log.length -1].duration),
         description: updateUser.log[updateUser.log.length -1].description
       }
